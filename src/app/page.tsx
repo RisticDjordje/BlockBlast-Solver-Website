@@ -30,57 +30,73 @@ export default function Page() {
     [0, 1, 2].map(() => Array.from({ length: 5 }, () => Array(5).fill(0)))
   );
 
-  // Utility to set a single grid cell to a given value
-  const setGridValue = (row: number, col: number, value: number) => {
+  // Colors for each piece
+  const pieceColors = ['#ed594a', '#f59e0b', '#34d399'];
+
+  // Utility to reset the main grid
+  const clearGrid = () => {
+    setGrid(Array.from({ length: 8 }, () => Array(8).fill(0)));
+  };
+
+  // Utility to reset a single shape
+  const clearShape = (index: number) => {
+    setShapes(prev => {
+      const next = prev.map((shape, si) =>
+        si === index ? Array.from({ length: 5 }, () => Array(5).fill(0)) : shape
+      );
+      return next;
+    });
+  };
+
+  // Set value helpers
+  const setGridValue = (row: number, col: number, val: number) => {
     setGrid(prev => {
       const next = prev.map(r => [...r]);
-      next[row][col] = value;
+      next[row][col] = val;
       return next;
     });
   };
-
-  // Utility to set a single shape cell to a given value
-  const setShapeValue = (shapeIndex: number, row: number, col: number, value: number) => {
+  const setShapeValue = (si: number, row: number, col: number, val: number) => {
     setShapes(prev => {
       const next = prev.map(shape => shape.map(r => [...r]));
-      next[shapeIndex][row][col] = value;
+      next[si][row][col] = val;
       return next;
     });
   };
 
-  // Handlers for grid paint
-  const handleGridMouseDown = (r: number, c: number) => {
+  // Grid painting handlers
+  const onGridMouseDown = (r: number, c: number) => {
     const newVal = grid[r][c] ? 0 : 1;
     setIsMouseDown(true);
     setPaintValue(newVal);
     setGridValue(r, c, newVal);
   };
-  const handleGridMouseEnter = (r: number, c: number) => {
+  const onGridMouseEnter = (r: number, c: number) => {
     if (isMouseDown && paintValue !== null) {
       setGridValue(r, c, paintValue);
     }
   };
 
-  // Handlers for shape paint
-  const handleShapeMouseDown = (si: number, r: number, c: number) => {
+  // Shape painting handlers
+  const onShapeMouseDown = (si: number, r: number, c: number) => {
     const newVal = shapes[si][r][c] ? 0 : 1;
     setIsMouseDown(true);
     setPaintValue(newVal);
     setShapeValue(si, r, c, newVal);
   };
-  const handleShapeMouseEnter = (si: number, r: number, c: number) => {
+  const onShapeMouseEnter = (si: number, r: number, c: number) => {
     if (isMouseDown && paintValue !== null) {
       setShapeValue(si, r, c, paintValue);
     }
   };
 
-  // End paint on mouse up/leave
+  // End painting
   const endPaint = () => {
     setIsMouseDown(false);
     setPaintValue(null);
   };
 
-  // Send POST to /api/solve
+  // POST to solver
   const handleSolve = async () => {
     const payload = { grid, shapes, score: [0.0], combo: [0] };
     try {
@@ -105,14 +121,19 @@ export default function Page() {
       <h1 className="title">BlockBlast Solver</h1>
       <Tutorial />
 
+      <div className="grid-controls">
+        <button className="clear-button" onClick={clearGrid}>
+          Clear Grid
+        </button>
+      </div>
       <section className="main-grid">
         {grid.map((row, r) =>
           row.map((cell, c) => (
             <div
               key={`${r}-${c}`}
-              className={`cell ${cell ? 'on' : ''}`}
-              onMouseDown={() => handleGridMouseDown(r, c)}
-              onMouseEnter={() => handleGridMouseEnter(r, c)}
+              className={`cell ${cell && 'on'}`}
+              onMouseDown={() => onGridMouseDown(r, c)}
+              onMouseEnter={() => onGridMouseEnter(r, c)}
             />
           ))
         )}
@@ -121,15 +142,21 @@ export default function Page() {
       <div className="shapes-section">
         {shapes.map((shape, si) => (
           <div key={si} className="shape-wrapper">
-            <h3 className="shape-title">Piece {si + 1}</h3>
+            <div className="shape-header">
+              <h3 className="shape-title">Piece {si + 1}</h3>
+              <button className="clear-button" onClick={() => clearShape(si)}>
+                Clear
+              </button>
+            </div>
             <div className="shape-grid">
               {shape.map((row, r) =>
                 row.map((cell, c) => (
                   <div
                     key={`${si}-${r}-${c}`}
-                    className={`cell ${cell ? 'on' : ''}`}
-                    onMouseDown={() => handleShapeMouseDown(si, r, c)}
-                    onMouseEnter={() => handleShapeMouseEnter(si, r, c)}
+                    className="cell"
+                    style={cell ? { background: pieceColors[si] } : undefined}
+                    onMouseDown={() => onShapeMouseDown(si, r, c)}
+                    onMouseEnter={() => onShapeMouseEnter(si, r, c)}
                   />
                 ))
               )}
@@ -150,13 +177,13 @@ export default function Page() {
           </a>
         </p>
         <p>
-          Solver AI source:&nbsp;
+          Reinforcement Learning Solver AI source:&nbsp;
           <a href="https://github.com/RisticDjordje/BlockBlast-Game-AI-Agent" target="_blank" rel="noopener noreferrer">
-            RL Agent Repo
+            GitHub Repo
           </a>
         </p>
         <p>
-          This solver is powered by a trained AI agent using reinforcement learning. Clicking <strong>Solve</strong> sends your current grid &amp; pieces to the agent for analysis.
+          Powered by a trained AI agent using reinforcement learning. Clicking <strong>Solve</strong> sends your current grid &amp; pieces to the agent for analysis.
         </p>
       </footer>
 
@@ -182,6 +209,18 @@ export default function Page() {
         .tutorial h2 {
           margin-top: 0;
         }
+        .grid-controls {
+          margin-bottom: 0.5rem;
+        }
+        .clear-button {
+          padding: 0.25rem 0.5rem;
+          font-size: 0.875rem;
+          background: #e2e8f0;
+          color: #1a202c;
+          border: 1px solid #cbd5e0;
+          border-radius: 4px;
+          cursor: pointer;
+        }
         .main-grid {
           display: grid;
           grid-template-columns: repeat(8, 1fr);
@@ -201,9 +240,15 @@ export default function Page() {
         .shape-wrapper {
           text-align: center;
         }
-        .shape-title {
+        .shape-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           margin-bottom: 0.5rem;
+        }
+        .shape-title {
           font-size: 1.1rem;
+          margin: 0;
         }
         .shape-grid {
           display: grid;
@@ -213,12 +258,12 @@ export default function Page() {
           aspect-ratio: 1;
         }
         .cell {
-          background: #eee;
-          border: 1px solid #ccc;
+          background: #eee; /* light blue default */
+          border: 1px solid #90cdf4;
           aspect-ratio: 1;
         }
-        .cell.on {
-          background: #2f855a;
+        .main-grid .cell.on {
+          background: #3182ce; /* nice blue on */
         }
         .solve-button {
           padding: 0.75rem 1.5rem;
