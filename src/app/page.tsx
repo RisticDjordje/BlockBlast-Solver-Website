@@ -203,7 +203,6 @@ export default function Page() {
     console.log('Sending payload to solver:', payload);
     try {
       const apiUrl = process.env.NEXT_PUBLIC_SOLVER_API_URL || 'http://localhost:8000/api/solve'; // Default fallback
-      console.log('API URL:', apiUrl);
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
