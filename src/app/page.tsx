@@ -33,6 +33,9 @@ export default function Page() {
   // Colors for each piece
   const pieceColors = ['#ed594a', '#f59e0b', '#34d399'];
 
+  // Agent selection state
+  const [selectedAgent, setSelectedAgent] = useState<string>('MaskedPPO');
+
   // Utility to reset the main grid
   const clearGrid = () => {
     setGrid(Array.from({ length: 8 }, () => Array(8).fill(0)));
@@ -98,9 +101,18 @@ export default function Page() {
 
   // POST to solver
   const handleSolve = async () => {
-    const payload = { grid, shapes, score: [0.0], combo: [0] };
+    const payload = {
+      grid,
+      shapes,
+      score: [0.0],
+      combo: [0],
+      model: selectedAgent
+    };
+    console.log('Sending payload to solver:', payload);
     try {
-      const res = await fetch('/api/solve', {
+      const apiUrl = process.env.NEXT_PUBLIC_SOLVER_API_URL || 'http://localhost:8000/api/solve'; // Default fallback
+      console.log('API URL:', apiUrl);
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -125,6 +137,14 @@ export default function Page() {
         <button className="clear-button" onClick={clearGrid}>
           Clear Grid
         </button>
+        <select
+          className="agent-selector"
+          value={selectedAgent}
+          onChange={(e) => setSelectedAgent(e.target.value)}
+        >
+          <option value="MaskedPPO">MaskedPPO</option>
+          <option value="MaskedDQN">MaskedDQN</option>
+        </select>
       </div>
       <section className="main-grid">
         {grid.map((row, r) =>
@@ -220,6 +240,13 @@ export default function Page() {
           border: 1px solid #cbd5e0;
           border-radius: 4px;
           cursor: pointer;
+        }
+        .agent-selector {
+          margin-left: 1rem;
+          padding: 0.25rem 0.5rem;
+          font-size: 0.875rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 4px;
         }
         .main-grid {
           display: grid;
