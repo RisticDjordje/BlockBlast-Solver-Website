@@ -15,6 +15,84 @@ function Tutorial() {
   );
 }
 
+// Component to display steps received from the backend
+function StepsDisplay({ steps }: { steps: any[] }) {
+  return (
+    <div className="steps-display">
+      <h2>Steps Received</h2>
+      <ol>
+        {steps.map((step, index) => (
+          <li key={index}>
+            <p><strong>Step {step.step}:</strong></p>
+            <ul>
+              <li><strong>Action:</strong> {step.action}</li>
+              <li><strong>Shape Index:</strong> {step.shape_idx}</li>
+              <li><strong>Row:</strong> {step.row}</li>
+              <li><strong>Column:</strong> {step.col}</li>
+              <li><strong>Lines Cleared:</strong> {step.lines_cleared}</li>
+              <li><strong>Done:</strong> {step.done ? 'Yes' : 'No'}</li>
+              <li><strong>Board:</strong></li>
+              <div className="board-visualization">
+                {step.board.map((row: number[], rowIndex: number) => (
+                  <div key={rowIndex} className="board-row">
+                    {row.map((cell: number, colIndex: number) => (
+                      <div
+                        key={colIndex}
+                        className={`board-cell ${cell ? 'filled' : ''}`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </ul>
+          </li>
+        ))}
+      </ol>
+      <style jsx>{`
+        .steps-display {
+          text-align: left;
+          background: #f7fafc;
+          padding: 1rem;
+          border-radius: 8px;
+          margin-top: 1.5rem;
+        }
+        .steps-display h2 {
+          margin-top: 0;
+        }
+        .steps-display ol {
+          padding-left: 1.5rem;
+        }
+        .board-visualization {
+          display: inline-block;
+          margin-top: 0.5rem;
+          border: 2px solid #cbd5e0;
+        }
+        .board-row {
+          display: flex;
+        }
+        .board-cell {
+          width: 20px;
+          height: 20px;
+          background: #e2e8f0;
+          border: 1px solid #90cdf4;
+        }
+        .board-cell.filled {
+          background: #3182ce;
+        }
+        .board-cell {
+          width: 20px;
+          height: 20px;
+          background: #e2e8f0; /* Light gray for empty cells */
+          border: 1px solid #90cdf4;
+        }
+        .board-cell.filled {
+          background: #3182ce; /* Blue for filled cells */
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function Page() {
   // Track mouse dragging state and paint value
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -35,6 +113,9 @@ export default function Page() {
 
   // Agent selection state
   const [selectedAgent, setSelectedAgent] = useState<string>('MaskedPPO');
+
+  // Steps received from the backend
+  const [steps, setSteps] = useState<any[]>([]);
 
   // Utility to reset the main grid
   const clearGrid = () => {
@@ -99,7 +180,7 @@ export default function Page() {
     setPaintValue(null);
   };
 
-  // POST to solver
+  // POST to solver and handle response
   const handleSolve = async () => {
     const payload = {
       grid,
@@ -119,6 +200,7 @@ export default function Page() {
       });
       const data = await res.json();
       console.log('Solver response:', data);
+      setSteps(data.steps || []); // Assuming the backend returns steps in `data.steps`
     } catch (err) {
       console.error(err);
     }
@@ -188,6 +270,9 @@ export default function Page() {
       <button className="solve-button" onClick={handleSolve}>
         Solve
       </button>
+
+      {/* Render StepsDisplay */}
+      {steps.length > 0 && <StepsDisplay steps={steps} />}
 
       <footer className="footer">
         <p>
