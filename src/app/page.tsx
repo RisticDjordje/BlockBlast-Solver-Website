@@ -16,7 +16,18 @@ function Tutorial() {
 }
 
 // Component to display steps received from the backend
-function StepsDisplay({ steps }: { steps: any[] }) {
+interface Step {
+  step: number;
+  action: string;
+  shape_idx: number;
+  row: number;
+  col: number;
+  lines_cleared: number;
+  done: boolean;
+  board: number[][];
+}
+
+function StepsDisplay({ steps }: { steps: Step[] }) {
   return (
     <div className="steps-display">
       <h2>Steps Received</h2>
@@ -115,7 +126,7 @@ export default function Page() {
   const [selectedAgent, setSelectedAgent] = useState<string>('MaskedPPO');
 
   // Steps received from the backend
-  const [steps, setSteps] = useState<any[]>([]);
+  const [steps, setSteps] = useState<Step[]>([]);
 
   // Utility to reset the main grid
   const clearGrid = () => {
